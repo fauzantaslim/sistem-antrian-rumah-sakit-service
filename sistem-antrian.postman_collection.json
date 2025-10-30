@@ -1,0 +1,1074 @@
+{
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "name": "Sistem Antrian Service API",
+        "description": "API Collection untuk Sistem Antrian Service - User Management, Email Verification & Google OAuth Login dengan response structure yang konsisten",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_exporter_id": "12345678"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login with Google (Redirect)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/google",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "google"]
+                        },
+                        "description": "Redirect ke Google OAuth login page. Buka endpoint ini di browser untuk login dengan Google."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Current User",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/me",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "me"]
+                        },
+                        "description": "Mendapatkan informasi user yang sedang login. Requires Bearer token."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/logout",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "logout"]
+                        },
+                        "description": "Logout dan menghapus access token. Requires Bearer token."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoint untuk autentikasi menggunakan Google OAuth"
+        },
+        {
+            "name": "User Management",
+            "item": [
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/users?per_page=10&page=1&search=&sort_by=created_at&sort_order=desc",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users"],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "10",
+                                    "description": "Jumlah data per halaman (default: 10)"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Nomor halaman (default: 1)"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "description": "Cari berdasarkan full_name, email, atau counter_name"
+                                },
+                                {
+                                    "key": "sort_by",
+                                    "value": "created_at",
+                                    "description": "Field untuk sorting: full_name, email, role, email_verified_at, created_at (default: created_at)"
+                                },
+                                {
+                                    "key": "sort_order",
+                                    "value": "desc",
+                                    "description": "Urutan sorting: asc atau desc (default: desc)"
+                                }
+                            ]
+                        },
+                        "description": "Mengambil data user dengan pagination, search, dan sorting.\n\n**Query Parameters:**\n- per_page: Jumlah data per halaman (default: 10)\n- page: Nomor halaman (default: 1)\n- search: Cari di full_name, email, atau counter_name\n- sort_by: full_name, email, role, email_verified_at, created_at (default: created_at)\n- sort_order: asc atau desc (default: desc)\n\n**Response Structure:**\n```json\n{\n  \"status_code\": 200,\n  \"success\": true,\n  \"message\": \"Data user berhasil diambil\",\n  \"data\": {\n    \"users\": [...],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"per_page\": 10,\n      \"total\": 3,\n      \"last_page\": 1,\n      \"from\": 1,\n      \"to\": 3\n    }\n  }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"user_id\", jsonData.data.user_id);",
+                                    "    pm.environment.set(\"user_email\", jsonData.data.email);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"full_name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"admin\",\n    \"counter_id\": \"01JBEXAMPLE123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/users",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users"]
+                        },
+                        "description": "Membuat user baru dan mengirim email verifikasi.\n\n**Required Fields:**\n- full_name (string, max 255)\n- email (string, valid email, unique)\n- role (enum: admin, petugas)\n- counter_id (string, must exist in counters table)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Single User",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users", "{{user_id}}"]
+                        },
+                        "description": "Mengambil detail user berdasarkan user_id"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"full_name\": \"John Doe Updated\",\n    \"email\": \"john.updated@example.com\",\n    \"role\": \"petugas\",\n    \"counter_id\": \"01JBEXAMPLE999999\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users", "{{user_id}}"]
+                        },
+                        "description": "Update data user. Semua field bersifat optional (menggunakan validation 'sometimes').\n\n**Optional Fields:**\n- full_name\n- email (akan di-check unique kecuali untuk user yang sedang diupdate)\n- role\n- counter_id"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User (PATCH)",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"full_name\": \"John Doe Partial Update\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users", "{{user_id}}"]
+                        },
+                        "description": "Partial update user - hanya update field yang dikirim"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users", "{{user_id}}"]
+                        },
+                        "description": "Menghapus user dari sistem"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoint untuk mengelola user (CRUD operations)"
+        },
+        {
+            "name": "Counter Management",
+            "item": [
+                {
+                    "name": "Get Counter List (PUBLIC)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/counters/list",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "counters",
+                                "list"
+                            ]
+                        },
+                        "description": "**PUBLIC ENDPOINT** - Mendapatkan daftar counter sederhana tanpa login.\n\n**Features:**\n- Tidak perlu authentication\n- Tidak ada pagination\n- Hanya menampilkan: counter_id, counter_name, description\n- Sorted by counter_name ASC\n\n**Response:**\n```json\n{\n  \"status_code\": 200,\n  \"success\": true,\n  \"message\": \"Data counter berhasil diambil\",\n  \"data\": [\n    {\n      \"counter_id\": \"01K8SQCGXSR9C0YE95B4T2JYJE\",\n      \"counter_name\": \"Administrasi\",\n      \"description\": \"Loket administrasi\"\n    },\n    {\n      \"counter_id\": \"01K8SQ1HRXACTHDX8KTRX00NMH\",\n      \"counter_name\": \"Loket 1\",\n      \"description\": \"Loket pelayanan umum\"\n    },\n    {\n      \"counter_id\": \"01K8SQCGXSR9C0YE95B4T2JYJE\",\n      \"counter_name\": \"Loket 3\",\n      \"description\": \"Loket informasi\"\n    }\n  ]\n}\n```\n\n**Use Case:**\n- Dropdown counter di kiosk ambil nomor\n- Pilihan counter untuk pasien\n- Display list counter di website public"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Counters (PROTECTED)",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/counters?per_page=10&page=1&search=&sort_by=created_at&sort_order=desc",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "counters"],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "10",
+                                    "description": "Jumlah data per halaman (default: 10)"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Nomor halaman (default: 1)"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "description": "Cari berdasarkan counter_name atau description"
+                                },
+                                {
+                                    "key": "sort_by",
+                                    "value": "created_at",
+                                    "description": "Field untuk sorting: counter_name, created_at (default: created_at)"
+                                },
+                                {
+                                    "key": "sort_order",
+                                    "value": "desc",
+                                    "description": "Urutan sorting: asc atau desc (default: desc)"
+                                }
+                            ]
+                        },
+                        "description": "Mengambil data counter dengan pagination, search, dan sorting.\n\n**Query Parameters:**\n- per_page: Jumlah data per halaman (default: 10)\n- page: Nomor halaman (default: 1)\n- search: Cari di counter_name atau description\n- sort_by: counter_name, created_at (default: created_at)\n- sort_order: asc atau desc (default: desc)\n\n**Response Structure:**\n```json\n{\n  \"status_code\": 200,\n  \"success\": true,\n  \"message\": \"Data counter berhasil diambil\",\n  \"data\": {\n    \"counters\": [...],\n    \"pagination\": {...}\n  }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Counter",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"counter_id\", jsonData.data.counter_id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"counter_name\": \"Loket 4\",\n    \"description\": \"Loket pelayanan khusus\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/counters",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "counters"]
+                        },
+                        "description": "Membuat counter baru.\n\n**Required Fields:**\n- counter_name (string, max 255)\n\n**Optional Fields:**\n- description (string, nullable)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Single Counter",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/counters/{{counter_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "counters", "{{counter_id}}"]
+                        },
+                        "description": "Mengambil detail counter berdasarkan counter_id"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Counter",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"counter_name\": \"Loket 4 Updated\",\n    \"description\": \"Deskripsi diupdate\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/counters/{{counter_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "counters", "{{counter_id}}"]
+                        },
+                        "description": "Update data counter. Semua field bersifat optional (menggunakan validation 'sometimes').\n\n**Optional Fields:**\n- counter_name\n- description"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Counter (PATCH)",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"counter_name\": \"Loket 4 Partial Update\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/counters/{{counter_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "counters", "{{counter_id}}"]
+                        },
+                        "description": "Partial update counter - hanya update field yang dikirim"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Counter",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/counters/{{counter_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "counters", "{{counter_id}}"]
+                        },
+                        "description": "Menghapus counter dari sistem"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoint untuk mengelola counter (CRUD operations)"
+        },
+        {
+            "name": "Queue Management",
+            "item": [
+                {
+                    "name": "Create Queue (PUBLIC)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"queue_id\", jsonData.data.queue_id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"counter_id\": \"{{counter_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/queues",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "queues"]
+                        },
+                        "description": "**PUBLIC ENDPOINT** - Pasien dapat mengambil nomor antrian tanpa login.\n\n**Auto-Generate Queue Number:**\n- Format: {LetterCode}{Number}\n- LetterCode: Ditentukan dari urutan pembuatan counter (berdasarkan created_at)\n  - Counter pertama dibuat → A\n  - Counter kedua dibuat → B\n  - Counter ketiga dibuat → C\n  - Dan seterusnya...\n- Number: Auto-increment per hari per counter (001, 002, 003, ...)\n\n**Contoh:**\n- Counter \"Poli Anak\" (dibuat pertama) → A001, A002, A003\n- Counter \"Poli Gigi\" (dibuat kedua) → B001, B002, B003\n- Counter \"Poli Umum\" (dibuat ketiga) → C001, C002, C003\n\n**Required Fields:**\n- counter_id (string)\n\n**Auto-filled:**\n- queue_number (generated berdasarkan urutan counter)\n- status (default: waiting)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Display Queue Monitor (PUBLIC)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/queues/display",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "queues", "display"]
+                        },
+                        "description": "**PUBLIC ENDPOINT** - Untuk display monitor antrian (TV/Monitor) tanpa login.\n\n**Response Structure:**\n- currently_called: Array antrian yang sedang dipanggil dari semua counter\n- waiting_queues: Array maksimal 8 antrian dengan status waiting (sorted by queue_number ASC)\n\n**Use Case:**\n- Display monitor di ruang tunggu\n- TV antrian di loket\n- Kiosk informasi antrian\n\n**Features:**\n- Menampilkan semua antrian yang sedang dipanggil (status: called)\n- Menampilkan maksimal 8 antrian yang menunggu (status: waiting)\n- Include relasi counter dan called_by user\n- Sorted by queue_number ASC\n\n**No Authentication Required!**"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Queues",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/queues?counter_id={{counter_id}}&per_page=10&page=1&search=&sort_by=queue_number&sort_order=asc",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "queues"],
+                            "query": [
+                                {
+                                    "key": "counter_id",
+                                    "value": "{{counter_id}}",
+                                    "description": "REQUIRED - Counter ID untuk filter"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10",
+                                    "description": "Jumlah data per halaman (default: 10)"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Nomor halaman (default: 1)"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "description": "Cari berdasarkan queue_number"
+                                },
+                                {
+                                    "key": "sort_by",
+                                    "value": "queue_number",
+                                    "description": "Field untuk sorting: queue_number, status, created_at, called_at (default: queue_number)"
+                                },
+                                {
+                                    "key": "sort_order",
+                                    "value": "asc",
+                                    "description": "Urutan sorting: asc atau desc (default: asc)"
+                                }
+                            ]
+                        },
+                        "description": "Mengambil data antrian dengan filter counter.\n\n**REQUIRED:** counter_id\n\n**Auto-Filter:**\n- Hanya menampilkan status: waiting dan called\n- Status done otomatis di-exclude\n\n**Response includes:**\n- currently_called: Object antrian yang sedang dipanggil (null jika tidak ada)\n- queues: Array antrian (waiting + called)\n- pagination: Metadata pagination\n\n**Default Sorting:** queue_number ASC (L001, L002, L003)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Single Queue",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/queues/{{queue_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "queues", "{{queue_id}}"]
+                        },
+                        "description": "Mengambil detail antrian berdasarkan queue_id"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Queue Status",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"done\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/queues/{{queue_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "queues", "{{queue_id}}"]
+                        },
+                        "description": "Update status antrian dengan validasi transition.\n\n**Status Transition Rules:**\n- waiting → called (only)\n- called → done (only)\n- done → cannot be updated (final state)\n\n**Auto-fill saat status berubah ke 'called':**\n- called_at: waktu sekarang\n- called_by: user_id yang login\n\n**Valid Status:**\n- waiting\n- called\n- done"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoint untuk mengelola antrian (Queue Management)\n\n**Features:**\n- Public endpoint untuk pasien ambil nomor\n- Public endpoint untuk display monitor antrian (TV/Monitor)\n- Auto-generate queue number berdasarkan counter\n- Status transition validation (waiting → called → done)\n- Currently called object di list endpoint\n\n**Public Endpoints (No Auth):**\n- POST /queues - Pasien ambil nomor\n- GET /queues/display - Display monitor antrian"
+        },
+        {
+            "name": "Dashboard",
+            "item": [
+                {
+                    "name": "Get Dashboard Stats",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/dashboard/stats",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "dashboard", "stats"]
+                        },
+                        "description": "Get dashboard statistics.\n\n**Response Data:**\n1. **Total Queues Today** - Number of queues created today\n2. **Total Counters** - Number of counters available\n3. **Total Users** - Number of registered users\n4. **Average Waiting Time** - Average waiting time from created_at to called_at (in minutes)\n\n**Response:**\n```json\n{\n  \"status_code\": 200,\n  \"success\": true,\n  \"message\": \"Dashboard statistics retrieved successfully\",\n  \"data\": {\n    \"total_queues_today\": 45,\n    \"total_counters\": 5,\n    \"total_users\": 12,\n    \"average_waiting_time\": {\n      \"value\": 15.5,\n      \"unit\": \"minutes\"\n    }\n  }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Dashboard Charts",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/dashboard/charts?filter=daily",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "dashboard", "charts"],
+                            "query": [
+                                {
+                                    "key": "filter",
+                                    "value": "daily",
+                                    "description": "Filter: daily, weekly, monthly, yearly, all (default: daily)"
+                                }
+                            ]
+                        },
+                        "description": "Get dashboard chart data.\n\n**Query Parameters:**\n- filter: daily, weekly, monthly, yearly, all (default: daily)\n\n**Response Data:**\n1. **Traffic Chart** - Queue traffic chart per time period\n   - daily: Per hour (00:00 - 23:00)\n   - weekly: Per day (last 7 days)\n   - monthly: Per day (current month)\n   - yearly: Per month (current year)\n   - all: Per month (all time)\n\n2. **Queue per Counter Chart** - Number of queues per counter\n   - Shows total queues per counter based on filter\n   - Sorted by total descending\n\n**Response Example (daily):**\n```json\n{\n  \"status_code\": 200,\n  \"success\": true,\n  \"message\": \"Dashboard chart data retrieved successfully\",\n  \"data\": {\n    \"filter\": \"daily\",\n    \"traffic_chart\": [\n      { \"period\": \"08:00\", \"total\": 5 },\n      { \"period\": \"09:00\", \"total\": 12 },\n      { \"period\": \"10:00\", \"total\": 18 }\n    ],\n    \"queue_per_counter_chart\": [\n      { \"counter_id\": \"...\", \"counter_name\": \"Poli Anak\", \"total\": 25 },\n      { \"counter_id\": \"...\", \"counter_name\": \"Poli Gigi\", \"total\": 20 },\n      { \"counter_id\": \"...\", \"counter_name\": \"Poli Umum\", \"total\": 15 }\n    ]\n  }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Queue Status Distribution",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/dashboard/status-distribution",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "dashboard", "status-distribution"]
+                        },
+                        "description": "Get queue status distribution per counter for today.\n\n**Response Data:**\nShows the distribution of queue statuses (waiting, called, done) for each counter today.\n\n**Response:**\n```json\n{\n  \"status_code\": 200,\n  \"success\": true,\n  \"message\": \"Queue status distribution retrieved successfully\",\n  \"data\": [\n    {\n      \"counter_id\": \"01K8SQ1HRXACTHDX8KTRX00001\",\n      \"counter_name\": \"Poli Anak\",\n      \"waiting\": 5,\n      \"called\": 2,\n      \"done\": 18,\n      \"total\": 25\n    },\n    {\n      \"counter_id\": \"01K8SQ1HRXACTHDX8KTRX00002\",\n      \"counter_name\": \"Poli Gigi\",\n      \"waiting\": 3,\n      \"called\": 1,\n      \"done\": 16,\n      \"total\": 20\n    },\n    {\n      \"counter_id\": \"01K8SQ1HRXACTHDX8KTRX00003\",\n      \"counter_name\": \"Poli Umum\",\n      \"waiting\": 4,\n      \"called\": 1,\n      \"done\": 10,\n      \"total\": 15\n    }\n  ]\n}\n```\n\n**Use Case:**\n- Monitor queue status per counter\n- See how many queues are waiting, being called, or done\n- Identify bottlenecks in specific counters\n- Real-time counter performance monitoring"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Dashboard statistics and chart endpoints\n\n**Features:**\n- Real-time statistics (queues today, total counters, total users, avg waiting time)\n- Traffic chart with custom filter (daily, weekly, monthly, yearly, all)\n- Queue per counter chart with custom filter\n- Queue status distribution per counter (waiting/called/done)\n\n**All endpoints are PROTECTED** - Require authentication"
+        },
+        {
+            "name": "Email Verification",
+            "item": [
+                {
+                    "name": "Verify Email",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}/verify",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "users", "{{user_id}}", "verify"]
+                        },
+                        "description": "Endpoint untuk verifikasi email user. Biasanya diakses melalui link yang dikirim ke email user.\n\n**Response:**\n- 200: Email berhasil diverifikasi atau sudah terverifikasi sebelumnya\n- 400: Verifikasi gagal\n- 404: User tidak ditemukan"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Resend Verification Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}/resend-verification",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "users",
+                                "{{user_id}}",
+                                "resend-verification"
+                            ]
+                        },
+                        "description": "Mengirim ulang email verifikasi ke user yang belum terverifikasi.\n\n**Response:**\n- 200: Email berhasil dikirim ulang atau email sudah terverifikasi\n- 404: User tidak ditemukan"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoint untuk proses verifikasi email user"
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [""]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [""]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "user_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "user_email",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "counter_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "queue_id",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}
