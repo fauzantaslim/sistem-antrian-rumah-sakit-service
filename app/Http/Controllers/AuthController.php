@@ -25,7 +25,7 @@ class AuthController extends Controller
     /**
      * Handle Google OAuth callback
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function handleGoogleCallback()
     {
@@ -38,18 +38,16 @@ class AuthController extends Controller
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (!$user) {
-                // User not found - must be registered by admin first
-                return view('email-not-registered', [
-                    'email' => $googleUser->getEmail()
-                ]);
+                // User not found - redirect to frontend with error
+                $frontendUrl = env('FRONTEND_URL', 'http://localhost:8026');
+                return redirect($frontendUrl . '/auth/callback?error=email_not_registered&email=' . urlencode($googleUser->getEmail()));
             }
 
             // Check if email is verified
             if (!$user->hasVerifiedEmail()) {
-                return view('email-not-verified', [
-                    'email' => $user->email,
-                    'user_id' => $user->user_id
-                ]);
+                // Email not verified - redirect to frontend with error
+                $frontendUrl = env('FRONTEND_URL', 'http://localhost:8026');
+                return redirect($frontendUrl . '/auth/callback?error=email_not_verified&email=' . urlencode($user->email) . '&user_id=' . $user->user_id);
             }
 
             // Update google_id if not set
@@ -60,26 +58,19 @@ class AuthController extends Controller
             // Create Sanctum token
             $token = $user->createToken('google-auth-token')->plainTextToken;
 
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Login berhasil',
-                'data' => [
-                    'user' => $user,
-                    'access_token' => $token,
-                    'token_type' => 'Bearer'
-                ]
-            ], 200);
+            // Redirect to frontend with token
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:8026');
+            return redirect($frontendUrl . '/auth/callback?token=' . urlencode($token) . '&user=' . urlencode(json_encode([
+                'user_id' => $user->user_id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ])));
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status_code' => 500,
-                'success' => false,
-                'message' => 'Login gagal',
-                'data' => [
-                    'error' => $e->getMessage()
-                ]
-            ], 500);
+            // Redirect to frontend with error
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:8026');
+            return redirect($frontendUrl . '/auth/callback?error=login_failed&message=' . urlencode($e->getMessage()));
         }
     }
 

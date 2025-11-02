@@ -59,180 +59,32 @@ class DashboardController extends Controller
     /**
      * Get dashboard charts data.
      *
-     * Query Parameters:
-     * - filter: daily, weekly, monthly, yearly, all (default: daily)
-     *
      * Returns:
      * 1. Traffic Chart - Antrian per periode waktu
      * 2. Queue per Counter Chart - Banyaknya antrian per loket
      */
-    public function charts(Request $request)
+    public function charts()
     {
-        $filter = $request->input('filter', 'daily');
+        // 1. Traffic Chart (antrian per jam hari ini)
+        $trafficChart = Queue::whereDate('created_at', now()->toDateString())
+            ->select(
+                DB::raw("TO_CHAR(created_at, 'HH24:00') as period"),
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'period' => $item->period,
+                    'total' => (int) $item->total
+                ];
+            });
 
-        // Validate filter
-        $allowedFilters = ['daily', 'weekly', 'monthly', 'yearly', 'all'];
-        if (!in_array($filter, $allowedFilters)) {
-            return response()->json([
-                'status_code' => 400,
-                'success' => false,
-                'message' => 'Filter tidak valid. Gunakan: daily, weekly, monthly, yearly, atau all',
-                'data' => null
-            ], 400);
-        }
-
-        // 1. Traffic Chart - Antrian per periode waktu
-        $trafficChart = $this->getTrafficChart($filter);
-
-        // 2. Queue per Counter Chart - Banyaknya antrian per loket
-        $queuePerCounterChart = $this->getQueuePerCounterChart($filter);
-
-        return response()->json([
-            'status_code' => 200,
-            'success' => true,
-            'message' => 'Data chart dashboard berhasil diambil',
-            'data' => [
-                'filter' => $filter,
-                'traffic_chart' => $trafficChart,
-                'queue_per_counter_chart' => $queuePerCounterChart
-            ]
-        ], 200);
-    }
-
-    /**
-     * Get traffic chart data based on filter.
-     */
-    private function getTrafficChart($filter)
-    {
-        switch ($filter) {
-            case 'daily':
-                // Antrian per jam hari ini (00:00 - 23:00)
-                return Queue::whereDate('created_at', now()->toDateString())
-                    ->select(
-                        DB::raw("TO_CHAR(created_at, 'HH24:00') as period"),
-                        DB::raw('COUNT(*) as total')
-                    )
-                    ->groupBy('period')
-                    ->orderBy('period')
-                    ->get()
-                    ->map(function ($item) {
-                        return [
-                            'period' => $item->period,
-                            'total' => (int) $item->total
-                        ];
-                    });
-
-            case 'weekly':
-                // Antrian per hari dalam 7 hari terakhir
-                return Queue::where('created_at', '>=', now()->subDays(7))
-                    ->select(
-                        DB::raw("TO_CHAR(created_at, 'YYYY-MM-DD') as period"),
-                        DB::raw("TO_CHAR(created_at, 'Day') as day_name"),
-                        DB::raw('COUNT(*) as total')
-                    )
-                    ->groupBy('period', 'day_name')
-                    ->orderBy('period')
-                    ->get()
-                    ->map(function ($item) {
-                        return [
-                            'period' => $item->period,
-                            'day_name' => trim($item->day_name),
-                            'total' => (int) $item->total
-                        ];
-                    });
-
-            case 'monthly':
-                // Antrian per hari dalam bulan ini
-                return Queue::whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', now()->month)
-                    ->select(
-                        DB::raw("TO_CHAR(created_at, 'YYYY-MM-DD') as period"),
-                        DB::raw('COUNT(*) as total')
-                    )
-                    ->groupBy('period')
-                    ->orderBy('period')
-                    ->get()
-                    ->map(function ($item) {
-                        return [
-                            'period' => $item->period,
-                            'total' => (int) $item->total
-                        ];
-                    });
-
-            case 'yearly':
-                // Antrian per bulan dalam tahun ini
-                return Queue::whereYear('created_at', now()->year)
-                    ->select(
-                        DB::raw("TO_CHAR(created_at, 'YYYY-MM') as period"),
-                        DB::raw("TO_CHAR(created_at, 'Month') as month_name"),
-                        DB::raw('COUNT(*) as total')
-                    )
-                    ->groupBy('period', 'month_name')
-                    ->orderBy('period')
-                    ->get()
-                    ->map(function ($item) {
-                        return [
-                            'period' => $item->period,
-                            'month_name' => trim($item->month_name),
-                            'total' => (int) $item->total
-                        ];
-                    });
-
-            case 'all':
-                // Antrian per bulan sepanjang masa
-                return Queue::select(
-                    DB::raw("TO_CHAR(created_at, 'YYYY-MM') as period"),
-                    DB::raw('COUNT(*) as total')
-                )
-                    ->groupBy('period')
-                    ->orderBy('period')
-                    ->get()
-                    ->map(function ($item) {
-                        return [
-                            'period' => $item->period,
-                            'total' => (int) $item->total
-                        ];
-                    });
-
-            default:
-                return [];
-        }
-    }
-
-    /**
-     * Get queue per counter chart data based on filter.
-     */
-    private function getQueuePerCounterChart($filter)
-    {
-        $query = Queue::with('counter:counter_id,counter_name');
-
-        switch ($filter) {
-            case 'daily':
-                $query->whereDate('created_at', now()->toDateString());
-                break;
-
-            case 'weekly':
-                $query->where('created_at', '>=', now()->subDays(7));
-                break;
-
-            case 'monthly':
-                $query->whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', now()->month);
-                break;
-
-            case 'yearly':
-                $query->whereYear('created_at', now()->year);
-                break;
-
-            case 'all':
-                // No filter, get all data
-                break;
-        }
-
-        return $query->select(
-            'counter_id',
-            DB::raw('COUNT(*) as total')
-        )
+        // 2. Queue per Counter Chart (antrian per loket hari ini)
+        $queuePerCounterChart = Queue::with('counter:counter_id,counter_name')
+            ->whereDate('created_at', now()->toDateString())
+            ->select('counter_id', DB::raw('COUNT(*) as total'))
             ->groupBy('counter_id')
             ->orderBy('total', 'desc')
             ->get()
@@ -243,6 +95,16 @@ class DashboardController extends Controller
                     'total' => (int) $item->total
                 ];
             });
+
+        return response()->json([
+            'status_code' => 200,
+            'success' => true,
+            'message' => 'Data chart dashboard (harian) berhasil diambil',
+            'data' => [
+                'traffic_chart' => $trafficChart,
+                'queue_per_counter_chart' => $queuePerCounterChart
+            ]
+        ], 200);
     }
 
     /**
