@@ -29,9 +29,10 @@ class UserRequest extends FormRequest
         ];
 
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            $user = $this->route('user');
+            // Route parameter 'user' is the user_id string
+            $userId = $this->route('user');
             $rules['full_name'] = 'sometimes|string|max:255';
-            $rules['email'] = 'sometimes|string|email|max:255|unique:users,email,' . $user->user_id . ',user_id';
+            $rules['email'] = 'sometimes|string|email|max:255|unique:users,email,' . $userId . ',user_id';
             $rules['role'] = 'sometimes|in:admin,petugas';
             $rules['counter_id'] = 'sometimes|string|exists:counters,counter_id';
         }

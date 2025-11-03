@@ -260,6 +260,27 @@ class QueueController extends Controller
 
             // Auto-set called_at and called_by when status changes to 'called'
             if ($newStatus === 'called' && $currentStatus === 'waiting') {
+                // Check if counter already has a queue with 'called' status
+                $existingCalledQueue = Queue::where('counter_id', $queue->counter_id)
+                    ->where('status', 'called')
+                    ->where('queue_id', '!=', $queue->queue_id)
+                    ->first();
+                
+                if ($existingCalledQueue) {
+                    return response()->json([
+                        'status_code' => 400,
+                        'success' => false,
+                        'message' => 'Sudah ada antrian yang sedang dipanggil di counter ini. Selesaikan antrian ' . $existingCalledQueue->queue_number . ' terlebih dahulu.',
+                        'data' => [
+                            'existing_called_queue' => [
+                                'queue_id' => $existingCalledQueue->queue_id,
+                                'queue_number' => $existingCalledQueue->queue_number,
+                                'called_at' => $existingCalledQueue->called_at
+                            ]
+                        ]
+                    ], 400);
+                }
+                
                 $validated['called_at'] = now();
                 $user = auth('sanctum')->user();
                 $validated['called_by'] = $user ? $user->user_id : null;

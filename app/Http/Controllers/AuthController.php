@@ -62,9 +62,10 @@ class AuthController extends Controller
             $frontendUrl = env('FRONTEND_URL', 'http://localhost:8026');
             return redirect($frontendUrl . '/auth/callback?token=' . urlencode($token) . '&user=' . urlencode(json_encode([
                 'user_id' => $user->user_id,
-                'name' => $user->name,
+                'name' => $user->full_name,
                 'email' => $user->email,
-                'role' => $user->role
+                'role' => $user->role,
+                'counter_id' => $user->counter_id
             ])));
 
         } catch (\Exception $e) {
@@ -94,11 +95,23 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
+        $user = $request->user();
+        
         return response()->json([
             'status_code' => 200,
             'success' => true,
             'message' => 'Data user berhasil diambil',
-            'data' => $request->user()
+            'data' => [
+                'user_id' => $user->user_id,
+                'google_id' => $user->google_id,
+                'full_name' => $user->full_name,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at,
+                'role' => $user->role,
+                'counter_id' => $user->counter_id,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ]
         ], 200);
     }
 }
