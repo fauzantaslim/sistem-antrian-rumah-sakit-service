@@ -31,6 +31,10 @@ class CounterController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
+
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
         $sortBy = $request->input('sort_by', 'created_at');
@@ -51,7 +55,7 @@ class CounterController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('counter_name', 'ILIKE', "%{$search}%")
-                  ->orWhere('description', 'ILIKE', "%{$search}%");
+                    ->orWhere('description', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -84,6 +88,10 @@ class CounterController extends Controller
      */
     public function store(CounterRequest $request)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
+
         $validated = $request->validated();
 
         $counter = Counter::create([
@@ -105,6 +113,10 @@ class CounterController extends Controller
      */
     public function show($id)
     {
+        if (request()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
+
         $counter = Counter::find($id);
 
         if (!$counter) {
@@ -115,7 +127,7 @@ class CounterController extends Controller
                 'data' => null
             ], 404);
         }
-        
+
         return response()->json([
             'status_code' => 200,
             'success' => true,
@@ -129,6 +141,10 @@ class CounterController extends Controller
      */
     public function update(CounterRequest $request, $id)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
+
         $counter = Counter::find($id);
 
         if (!$counter) {
@@ -142,7 +158,7 @@ class CounterController extends Controller
 
         $validated = $request->validated();
         $counter->update($validated);
-        
+
         return response()->json([
             'status_code' => 200,
             'success' => true,
@@ -156,6 +172,10 @@ class CounterController extends Controller
      */
     public function destroy($id)
     {
+        if (request()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
+
         $counter = Counter::find($id);
 
         if (!$counter) {
@@ -168,7 +188,7 @@ class CounterController extends Controller
         }
 
         $counter->delete();
-        
+
         return response()->json([
             'status_code' => 200,
             'success' => true,

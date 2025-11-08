@@ -15,6 +15,9 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
         $sortBy = $request->input('sort_by', 'created_at');
@@ -40,8 +43,8 @@ class UserController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('users.full_name', 'ILIKE', "%{$search}%")
-                  ->orWhere('users.email', 'ILIKE', "%{$search}%")
-                  ->orWhere('counters.counter_name', 'ILIKE', "%{$search}%");
+                    ->orWhere('users.email', 'ILIKE', "%{$search}%")
+                    ->orWhere('counters.counter_name', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -74,6 +77,9 @@ class UserController extends Controller
      */
     public function store(UserRequest $request)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
         $validated = $request->validated();
 
         $user = User::create([
@@ -100,6 +106,9 @@ class UserController extends Controller
      */
     public function show($id)
     {
+        if (request()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
         $user = User::with(['counter' => function ($q) {
             $q->select('counter_id', 'counter_name');
         }])->find($id);
@@ -112,7 +121,7 @@ class UserController extends Controller
                 'data' => null
             ], 404);
         }
-        
+
         return response()->json([
             'status_code' => 200,
             'success' => true,
@@ -126,6 +135,9 @@ class UserController extends Controller
      */
     public function update(UserRequest $request, $id)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
         $user = User::find($id);
 
         if (!$user) {
@@ -139,7 +151,7 @@ class UserController extends Controller
 
         $validated = $request->validated();
         $user->update($validated);
-        
+
         return response()->json([
             'status_code' => 200,
             'success' => true,
@@ -153,6 +165,9 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
+        if (request()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Admin only)'], 403);
+        }
         $user = User::find($id);
 
         if (!$user) {
@@ -165,7 +180,7 @@ class UserController extends Controller
         }
 
         $user->delete();
-        
+
         return response()->json([
             'status_code' => 200,
             'success' => true,

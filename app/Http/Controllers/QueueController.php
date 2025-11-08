@@ -18,6 +18,11 @@ class QueueController extends Controller
      */
     public function index(Request $request)
     {
+        $role = $request->user()->role ?? null;
+        if ($role !== 'petugas' && $role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Petugas only)'], 403);
+        }
+
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
         $sortBy = $request->input('sort_by', 'queue_number');
@@ -128,7 +133,7 @@ class QueueController extends Controller
             ->orderBy('created_at', 'asc')
             ->pluck('counter_id')
             ->toArray();
-        
+
         $counterIndex = array_search($counter->counter_id, $counterOrder);
         $letterCode = chr(65 + $counterIndex); // 65 = ASCII 'A'
 
@@ -175,6 +180,11 @@ class QueueController extends Controller
      */
     public function show($id)
     {
+        $role = request()->user()->role ?? null;
+        if ($role !== 'petugas' && $role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Petugas only)'], 403);
+        }
+
         $queue = Queue::with([
             'counter' => function ($q) {
                 $q->select('counter_id', 'counter_name');
@@ -211,6 +221,11 @@ class QueueController extends Controller
      */
     public function update(QueueRequest $request, $id)
     {
+        $role = $request->user()->role ?? null;
+        if ($role !== 'petugas' && $role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized (Petugas only)'], 403);
+        }
+
         $queue = Queue::find($id);
 
         if (!$queue) {
@@ -265,7 +280,7 @@ class QueueController extends Controller
                     ->where('status', 'called')
                     ->where('queue_id', '!=', $queue->queue_id)
                     ->first();
-                
+
                 if ($existingCalledQueue) {
                     return response()->json([
                         'status_code' => 400,
@@ -280,7 +295,7 @@ class QueueController extends Controller
                         ]
                     ], 400);
                 }
-                
+
                 $validated['called_at'] = now();
                 $user = auth('sanctum')->user();
                 $validated['called_by'] = $user ? $user->user_id : null;
